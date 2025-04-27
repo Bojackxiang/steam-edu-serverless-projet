@@ -1,0 +1,42 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install backend dependencies
+        working-directory: backend/
+        run: npm install
+
+      - name: Install AWS SAM CLI
+        run: |
+          pip install aws-sam-cli
+
+      - name: Build backend with SAM
+        working-directory: backend/
+        run: sam build
+
+      - name: Deploy backend with SAM
+        working-directory: backend/
+        run: |
+          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset \
+            --stack-name serverless-task-manager \
+            --capabilities CAPABILITY_IAM \
+            --region ap-southeast-2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
